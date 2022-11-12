@@ -20,3 +20,5 @@ Using R,
 ### Problems faced:
 - County column insufficient on its own in Tableau, extra research from [here](https://kb.tableau.com/articles/howto/plotting-u-s-5-digit-fips-county-code) helped in adding fibs and State columns.
 fibs data added to excel using outer join in R.
+
+This project was inspired by https://github.com/huishun98/SG-COVID-data
