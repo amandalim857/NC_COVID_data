@@ -1,0 +1,76 @@
+---
+title: "geog_data"
+output: html_document
+date: '2022-11-07'
+---
+```{r libraries}
+library(readr)
+library(dplyr)
+library(openxlsx)
+library(stringr)
+```
+
+
+```{r cases}
+cases = read.csv("https://raw.githubusercontent.com/amandalim857/NC_COVID_data/main/data/daily_cases.csv")
+county_pop = read_csv("https://raw.githubusercontent.com/amandalim857/NC_COVID_data/main/data/county_populations.csv")
+fibs = read.csv("https://raw.githubusercontent.com/amandalim857/NC_COVID_data/main/data/fibs_codes.csv")
+head(fibs)
+head(cases)
+head(county_pop)
+```
+
+```{r}
+colnames(fibs)[1] = "county"
+colnames(cases)[1] = "dates"
+cases = transform(cases, covid = as.numeric(covid))
+head(cases)
+```
+
+```{r}
+cases1 = cases[,c(1,2,3)]
+cases1$dates = as.Date(cases1$dates, format = "%m/%d/%y")
+head(cases1)
+sapply(cases1, typeof) # date formats are in 'double'
+```
+
+```{r}
+cases1 = cases1 %>% group_by(months = lubridate::floor_date(dates, 'month'), county) %>% summarize(covid_sum = sum(covid))
+```
+
+```{r}
+head(cases1)
+```
+
+```{r}
+county_names = unlist(lapply(county_pop$county, function (county) gsub(" County", "", county))) # remove 'county' to standardise with existing df
+
+# remove trailing whitespace in county column
+county_pop$county = as.vector(county_names)
+county_pop = county_pop %>% mutate(across(where(is.character), str_trim))
+
+cases1 = cases1 %>% mutate(across(where(is.character), str_trim))
+```
+
+
+```{r}
+head(county_pop)
+head(cases1)
+```
+
+```{r}
+df= cases1 %>% full_join(county_pop,by="county")
+df = df %>% full_join(fibs,by="county")
+df$covid_percent = (df$covid_sum/df$population)
+df = df %>% select(-rank) # remove redundant rank column
+```
+
+
+```{r}
+df
+```
+
+```{r}
+write.xlsx(df,"county_pop_percent.xlsx")
+```
+
